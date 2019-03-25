@@ -5,6 +5,9 @@ import numpy as np
 import os
 import cv2
 
+MAX_IMAGE_WIDTH = 300
+MAX_IMAGE_HEIGHT = 300
+
 class TLClassifier(object):
     def __init__(self, is_site):
         #TODO load classifier
@@ -61,6 +64,8 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
+        #process image
+        image = cv2.resize(image, (MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT))
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.expand_dims(image_rgb, axis = 0)
 
@@ -76,18 +81,20 @@ class TLClassifier(object):
 
         count_red = 0
         count_green = 0
+        
         for i in range(num_sque):
             if scores_sque[i] > self.min_score_thresh:
                 class_name = self.category_index[classes_sque[i]]
 
                 if class_name == TrafficLight.RED:
-                   count_red +=1
+                    rospy.logdebug("RED score:%f", scores_sque[i])
                 elif class_name == TrafficLight.GREEN:
-                    count_green +=1
+                    rospy.logdebug("GREEN score:%f", scores_sque[i])
+                elif class_name == TrafficLight.YELLOW:
+                    rospy.logdebug("YELLOW score:%f", scores_sque[i])
+                else:
+                    rospy.logdebug("UNKNOWN score:%f", scores_sque[i])
+                self.current_light = class_name
+                return self.current_light
 
-        if count_green > count_red:
-            self.current_light = TrafficLight.GREEN
-        else:
-            self.current_light = TrafficLight.RED
-
-        return self.current_light
+        return TrafficLight.UNKNOWN
